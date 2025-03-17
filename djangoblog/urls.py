@@ -44,6 +44,7 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
 ]
 urlpatterns += i18n_patterns(
+    path('amd/', include('amd_cpu.urls')),
     re_path(r'^admin/', admin_site.urls),
     re_path(r'', include('blog.urls', namespace='blog')),
     re_path(r'mdeditor/', include('mdeditor.urls')),
