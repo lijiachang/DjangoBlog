@@ -102,36 +102,11 @@ python manage.py compress --force
 本项目已经支持使用docker来部署，如果你有docker环境那么可以使用docker来部署，具体请参考:[docker部署](/docs/docker.md)
 
 
+# 二次开发后重新部署
 
-## 更多配置:
-[更多配置介绍](/docs/config.md)  
-[集成elasticsearch](/docs/es.md)
+首先重新构建镜像：
+docker-compose build djangoblog
 
-## 问题相关
-
-有任何问题欢迎提Issue,或者将问题描述发送至我邮箱 `liangliangyy#gmail.com`.我会尽快解答.推荐提交Issue方式.  
-
----
- ## 致大家🙋‍♀️🙋‍♂️
- 如果本项目帮助到了你，请在[这里](https://github.com/liangliangyy/DjangoBlog/issues/214)留下你的网址，让更多的人看到。
-您的回复将会是我继续更新维护下去的动力。 
-
-
-## 捐赠
-如果您觉得本项目对您有所帮助，欢迎您请我喝杯咖啡，您的支持是我最大的动力，您可以扫描下方二维码为我付款，谢谢。
-### 支付宝：
-<div>    
-<img src="/docs/imgs/alipay.jpg" width="150" height="150" />
-</div>  
-
-### 微信：
-<div>    
-<img src="/docs/imgs/wechat.jpg" width="150" height="150" />
-</div>
-
----
-
-感谢jetbrains
-<div>    
-<a href="https://www.jetbrains.com/?from=DjangoBlog"><img src="/docs/imgs/pycharm_logo.png" width="150" height="150"></a>
-</div>
+然后重启服务：
+docker-compose down
+docker-compose up -d

@@ -21,8 +21,8 @@
                     <span class="input-group-text bg-light border-0">
                         <i class="fas fa-search text-muted"></i>
                     </span>
-                    <input type="text" class="form-control form-control-lg border-0 bg-light" 
-                           id="searchInput" name="q" placeholder="输入CPU代号 (例如: 829)" 
+                    <input type="text" class="form-control form-control-lg border-0 bg-light"
+                           id="searchInput" name="q" placeholder="输入CPU代号 (例如: 829)"
                            value="{{ search_term }}" autocomplete="off">
                     <button class="btn btn-danger px-4 rounded-end" type="submit">
                         搜索
@@ -39,15 +39,15 @@
                 <h2 class="me-3 mb-0">搜索结果</h2>
                 <span class="badge bg-danger px-3 py-2 rounded-pill">{{ search_results|length }} 个匹配项</span>
             </div>
-            
+
             <div class="row">
                 {% for cpu in search_results %}
                 <div class="col-12 mb-4">
                     <div class="card border-0 shadow-sm hover-shadow transition-300">
-                        <div class="card-header d-flex justify-content-between align-items-center p-3" 
+                        <div class="card-header d-flex justify-content-between align-items-center p-3"
                              style="background: linear-gradient(135deg, #ED1C24, #7d0209); border: none;">
                             <h3 class="h4 mb-0 text-white">{{ cpu.name }}</h3>
-                            <span class="badge bg-light text-dark rounded-pill px-3">{{ cpu.id }}</span>
+                            <span class="badge bg-light text-dark rounded-pill px-3">多核心分数: {{ cpu.cpu_bench }}</span>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -168,7 +168,7 @@
                     <p class="mb-0">没有找到代号包含 "<strong>{{ search_term }}</strong>" 的 AMD CPU。请尝试其他搜索词。</p>
                 </div>
             </div>
-            
+
             <div class="text-center mt-4">
                 <button class="btn btn-outline-secondary" onclick="document.getElementById('searchInput').value = ''; document.getElementById('searchInput').focus();">
                     <i class="fas fa-redo me-2"></i>重新搜索
@@ -176,7 +176,7 @@
             </div>
         {% else %}
             <div class="text-center py-5 my-4">
-                <img src="https://www.amd.com/system/files/styles/992px/private/2019-07/238593-ryzen-3-vega-chip-left-1260x709_0.png?itok=oUW0D3Vw" 
+                <img src="https://www.amd.com/system/files/styles/992px/private/2019-07/238593-ryzen-3-vega-chip-left-1260x709_0.png?itok=oUW0D3Vw"
                      alt="AMD Ryzen Chip" style="max-width: 300px; opacity: 0.7;" class="img-fluid mb-4">
                 <h3 class="text-muted">请输入CPU代号以查询详细规格</h3>
                 <p class="text-muted">例如: 829, 5950X, 3700X 等</p>
@@ -213,21 +213,21 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('searchInput');
-    
+
     // 页面加载时聚焦搜索框
     input.focus();
-    
+
     // 点击搜索框时全选文本
     input.addEventListener('click', function() {
         this.select();
     });
-    
+
     // 平滑滚动到结果
     if (document.querySelector('#searchResults .card')) {
         setTimeout(() => {
-            document.querySelector('#searchResults').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
+            document.querySelector('#searchResults').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
         }, 300);
     }

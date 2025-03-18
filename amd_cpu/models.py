@@ -32,13 +32,15 @@ class AMDCPU:
         self.memory_channels = row[22]
         self.gpu_clock = row[23]
         self.gpu_name = row[24]
+        self.cpu_bench = "not available"
 
     def matches_search(self, search_term):
         search_term = str(search_term).strip().lower()
-        print(search_term)
-        print([self.code1, self.code2, self.code3])
 
         for code in [self.code1, self.code2, self.code3]:
             if code and search_term in str(code).lower():
                 return True
         return False
+
+    def add_cpu_bench(self, score):
+        self.cpu_bench = score

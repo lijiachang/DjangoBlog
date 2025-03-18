@@ -1,4 +1,5 @@
 # amd_cpu/services.py
+import json
 import os
 from django.conf import settings
 import xlrd
@@ -7,6 +8,7 @@ from .models import AMDCPU
 
 class AMDCPUService:
     _cpus = None  # In-memory storage
+    _benches = None
 
     @classmethod
     def load_cpus(cls):
@@ -41,6 +43,33 @@ class AMDCPUService:
         return cpus
 
     @classmethod
+    def load_benches(cls):
+        if cls._benches is not None:
+            return cls._benches
+
+        _benches = []
+        excel_path = os.path.join(settings.BASE_DIR, 'amd_cpu', 'data', 'cpu_bench.json')
+
+        try:
+            _benches = json.load(open(excel_path))
+            # [{'id': '5493', 'pai_ming': 1, 'ming_cheng': 'AMD Ryzen Threadripper PRO 7995WX', 'shu_zhi': '158518', 'bai_fen_bi': 100},
+        except Exception as e:
+            print("Error loading cpu_bench file: %s" % e)
+
+        cls._benches = _benches
+        return _benches
+
+    @classmethod
     def search_cpus(cls, search_term):
         cpus = cls.load_cpus()
-        return [cpu for cpu in cpus if cpu.matches_search(search_term)]
+        benches = cls.load_benches()
+        result =  [cpu for cpu in cpus if cpu.matches_search(search_term)]
+        for cpu in result:
+            for bench in benches:
+                cpu_name = cpu.name.replace('™', '') # AMD Ryzen™ 7 7840U -> AMD Ryzen 7 7840U
+                # print(cpu_name)
+                if cpu_name in bench['ming_cheng']:
+                    cpu.add_cpu_bench(bench['shu_zhi'])
+                    break
+
+        return result
