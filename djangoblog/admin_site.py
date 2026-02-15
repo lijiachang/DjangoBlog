@@ -15,6 +15,8 @@ from owntracks.admin import *
 from owntracks.models import *
 from servermanager.admin import *
 from servermanager.models import *
+from study_checkin.admin import *
+from study_checkin.models import *
 
 
 class DjangoBlogAdminSite(AdminSite):
@@ -62,3 +64,6 @@ admin_site.register(OwnTrackLog, OwnTrackLogsAdmin)
 admin_site.register(Site, SiteAdmin)
 
 admin_site.register(LogEntry, LogEntryAdmin)
+
+admin_site.register(StudyCheckinSettings, StudyCheckinSettingsAdmin)
+admin_site.register(StudySession, StudySessionAdmin)

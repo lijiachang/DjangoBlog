@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习打卡</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .main-wrapper {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 30px 16px 60px;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        .page-header p {
+            color: #8e99a4;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Cards */
+        .s-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .s-card-body { padding: 24px; }
+
+        /* Auth */
+        .auth-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e5ec, #f5f7fa);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8rem; color: #a0aec0;
+        }
+        .auth-input {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .auth-input:focus { border-color: #43e97b; }
+        .auth-btn {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .auth-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(67,233,123,0.4); }
+
+        /* Today total */
+        .today-banner {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .today-banner .label { font-size: 0.85rem; opacity: 0.85; }
+        .today-banner .time {
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+        }
+
+        /* Timer */
+        .timer-area {
+            text-align: center;
+            padding: 36px 24px;
+        }
+        .timer-status {
+            font-size: 0.9rem;
+            color: #a0aec0;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .timer-status.active { color: #43e97b; }
+        .timer-status.paused-st { color: #f6ad55; }
+        .timer-display {
+            font-size: 4.5rem;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            color: #2d3748;
+            letter-spacing: 3px;
+            line-height: 1;
+            margin-bottom: 28px;
+        }
+        .timer-area.studying { background: linear-gradient(135deg, #f0fff4, #c6f6d5); border-radius: 16px; }
+        .timer-area.paused { background: linear-gradient(135deg, #fffaf0, #feebc8); border-radius: 16px; }
+
+        /* Buttons */
+        .btn-ctrl {
+            border: none;
+            border-radius: 50px;
+            padding: 14px 36px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px;
+        }
+        .btn-ctrl:hover { transform: translateY(-2px); }
+        .btn-start {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(67,233,123,0.3);
+        }
+        .btn-pause {
+            background: linear-gradient(135deg, #f6ad55, #ed8936);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(237,137,54,0.3);
+        }
+        .btn-resume {
+            background: linear-gradient(135deg, #63b3ed, #4299e1);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(66,153,225,0.3);
+        }
+        .btn-end {
+            background: linear-gradient(135deg, #fc5c7d, #e74c3c);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(231,76,60,0.3);
+        }
+
+        /* Tips */
+        .tip-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+        }
+        .tip-focus {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+        }
+        .tip-focus .tip-icon { color: #4299e1; font-size: 1.5rem; }
+        .tip-target {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+        }
+        .tip-target .tip-icon { color: #48bb78; font-size: 1.5rem; }
+        .tip-text strong { display: block; margin-bottom: 2px; font-size: 0.9rem; }
+        .tip-text span { font-size: 0.85rem; color: #718096; }
+
+        /* Resume prompt */
+        .resume-card {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .resume-card h5 { font-size: 1rem; font-weight: 700; color: #c05621; margin-bottom: 8px; }
+        .resume-card p { font-size: 0.9rem; color: #7b6b4e; margin-bottom: 14px; }
+        .resume-btn {
+            border: none; border-radius: 10px; padding: 10px 20px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-right: 8px;
+        }
+        .resume-btn-yes { background: #48bb78; color: #fff; }
+        .resume-btn-no { background: #e2e8f0; color: #4a5568; }
+
+        /* Sessions table */
+        .card-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d3748;
+            padding: 16px 20px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-section-title i { color: #4299e1; }
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .sessions-table thead th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 20px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .sessions-table tbody td {
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            color: #4a5568;
+            border-bottom: 1px solid #f7fafc;
+        }
+        .sessions-table tbody tr:last-child td { border-bottom: none; }
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            color: #a0aec0;
+        }
+        .empty-state i { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+        /* Footer link */
+        .footer-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .footer-link a {
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .footer-link a:hover { color: #4299e1; }
+
+        /* Pulse animation */
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .pulse { animation: pulse 2s infinite; }
+
+        /* Dot animation */
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        .dot-blink { animation: blink 1s infinite; }
+
+        .auth-error { color: #e53e3e; font-size: 0.9rem; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-book-open"></i> 学习打卡</h1>
+        <p>专注学习，记录成长</p>
+    </div>
+
+    <!-- Auth Section -->
+    <div id="auth-section" style="{% if authenticated %}display:none{% endif %}">
+        <div class="s-card">
+            <div class="s-card-body" style="text-align:center;">
+                <div class="auth-icon"><i class="fas fa-lock"></i></div>
+                <h4 style="font-weight:700; margin-bottom:20px; color:#2d3748;">请输入访问密码</h4>
+                <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码" autocomplete="off">
+                <button class="auth-btn" id="btnVerify"><i class="fas fa-sign-in-alt"></i> 进入</button>
+                <div id="auth-error" class="auth-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Section -->
+    <div id="timer-section" style="{% if not authenticated %}display:none{% endif %}">
+        <!-- Today Total -->
+        <div class="today-banner">
+            <div class="label">今日学习总时长</div>
+            <div class="time" id="todayTotal">00:00:00</div>
+        </div>
+
+        <!-- Timer -->
+        <div class="s-card">
+            <div class="timer-area" id="timerCard">
+                <div class="timer-status" id="timerStatus">准备开始</div>
+                <div class="timer-display" id="timerDisplay">00:00:00</div>
+                <div>
+                    <button id="btnStart" class="btn-ctrl btn-start">
+                        <i class="fas fa-play"></i> 开始学习
+                    </button>
+                    <button id="btnPause" class="btn-ctrl btn-pause" style="display:none;">
+                        <i class="fas fa-pause"></i> 暂停
+                    </button>
+                    <button id="btnResume" class="btn-ctrl btn-resume" style="display:none;">
+                        <i class="fas fa-play"></i> 继续
+                    </button>
+                    <button id="btnEnd" class="btn-ctrl btn-end" style="display:none;">
+                        <i class="fas fa-stop"></i> 结束学习
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tip-card tip-focus">
+            <div class="tip-icon"><i class="fas fa-mobile-alt"></i></div>
+            <div class="tip-text">
+                <strong>专注提醒</strong>
+                <span>请关闭手机或开启飞行模式，保持学习专注！</span>
+            </div>
+        </div>
+        <div id="targetReachedTip" class="tip-card tip-target" style="display:none;">
+            <div class="tip-icon"><i class="fas fa-trophy"></i></div>
+            <div class="tip-text">
+                <strong>太棒了！</strong>
+                <span id="targetReachedMsg"></span>
+            </div>
+        </div>
+
+        <!-- Resume Prompt -->
+        <div id="resumePrompt" class="resume-card" style="display:none;">
+            <h5><i class="fas fa-exclamation-triangle"></i> 发现未结束的学习会话</h5>
+            <p id="resumePromptMsg"></p>
+            <button id="btnResumeSession" class="resume-btn resume-btn-yes">
+                <i class="fas fa-play"></i> 继续学习
+            </button>
+            <button id="btnDiscardSession" class="resume-btn resume-btn-no">
+                <i class="fas fa-times"></i> 放弃
+            </button>
+        </div>
+
+        <!-- Today Sessions -->
+        <div class="s-card">
+            <div class="card-section-title">
+                <i class="fas fa-list-ul"></i> 今日学习记录
+            </div>
+            <div id="noSessions" class="empty-state">
+                <i class="fas fa-inbox"></i>
+                今天还没有学习记录
+            </div>
+            <table id="sessionsTable" class="sessions-table" style="display:none;">
+                <thead>
+                    <tr><th>开始</th><th>结束</th><th>时长</th></tr>
+                </thead>
+                <tbody id="sessionsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-link">
+            <a href="{% url 'study_checkin:summary' %}">
+                <i class="fas fa-chart-bar"></i> 查看学习统计
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- State ---
+    let sessionId = null;
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    let isPaused = false;
+    let todayTotalSeconds = 0;
+    let sessionKey = '{{ session_key }}';
+    const dailyTargetSeconds = {{ daily_target_hours }} * 3600;
+    const csrfToken = '{{ csrf_token }}';
+    const activeSession = {{ active_session|safe }};
+
+    // --- Elements ---
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerStatus = document.getElementById('timerStatus');
+    const timerCard = document.getElementById('timerCard');
+    const todayTotal = document.getElementById('todayTotal');
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const btnResume = document.getElementById('btnResume');
+    const btnEnd = document.getElementById('btnEnd');
+    const targetReachedTip = document.getElementById('targetReachedTip');
+    const targetReachedMsg = document.getElementById('targetReachedMsg');
+    const resumePrompt = document.getElementById('resumePrompt');
+    const resumePromptMsg = document.getElementById('resumePromptMsg');
+
+    function formatTime(totalSec) {
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function apiCall(url, method, body) {
+        const opts = {
+            method: method,
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+        };
+        if (body) opts.body = JSON.stringify(body);
+        return fetch(url, opts).then(r => r.json());
+    }
+
+    // --- Password ---
+    document.getElementById('btnVerify').addEventListener('click', doVerify);
+    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') doVerify();
+    });
+
+    function doVerify() {
+        const pw = document.getElementById('passwordInput').value;
+        apiCall('{% url "study_checkin:api_verify" %}', 'POST', {password: pw, page: 'checkin'})
+        .then(data => {
+            if (data.success) {
+                sessionKey = data.session_key;
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('timer-section').style.display = '';
+                loadTodaySessions();
+            } else {
+                const err = document.getElementById('auth-error');
+                err.textContent = data.error || '密码错误';
+                err.style.display = '';
+            }
+        });
+    }
+
+    // --- Timer ---
+    function tick() {
+        if (!isPaused) {
+            elapsedSeconds++;
+            timerDisplay.textContent = formatTime(elapsedSeconds);
+            // 同步更新今日总时长（含当前进行中）
+            todayTotal.textContent = formatTime(todayTotalSeconds + elapsedSeconds);
+            checkTarget();
+        }
+    }
+
+    function checkTarget() {
+        if ((todayTotalSeconds + elapsedSeconds) >= dailyTargetSeconds && dailyTargetSeconds > 0) {
+            const totalH = ((todayTotalSeconds + elapsedSeconds) / 3600).toFixed(1);
+            targetReachedMsg.textContent = '你今天已学习超过 ' + totalH + ' 小时，目标达成！';
+            targetReachedTip.style.display = '';
+        }
+    }
+
+    function setStudyingUI() {
+        btnStart.style.display = 'none';
+        btnPause.style.display = '';
+        btnResume.style.display = 'none';
+        btnEnd.style.display = '';
+        timerStatus.textContent = '学习中';
+        timerStatus.className = 'timer-status active pulse';
+        timerCard.className = 'timer-area studying';
+    }
+
+    function setPausedUI() {
+        btnPause.style.display = 'none';
+        btnResume.style.display = '';
+        timerStatus.textContent = '已暂停';
+        timerStatus.className = 'timer-status paused-st';
+        timerCard.className = 'timer-area paused';
+    }
+
+    function setIdleUI() {
+        btnStart.style.display = '';
+        btnPause.style.display = 'none';
+        btnResume.style.display = 'none';
+        btnEnd.style.display = 'none';
+        timerStatus.textContent = '准备开始';
+        timerStatus.className = 'timer-status';
+        timerCard.className = 'timer-area';
+        timerDisplay.textContent = '00:00:00';
+    }
+
+    btnStart.addEventListener('click', function() {
+        apiCall('{% url "study_checkin:api_start" %}', 'POST', {session_key: sessionKey})
+        .then(data => {
+            if (data.success) {
+                sessionId = data.session_id;
+                elapsedSeconds = 0;
+                isPaused = false;
+                setStudyingUI();
+                timerInterval = setInterval(tick, 1000);
+            } else {
+                alert(data.error || '无法开始');
+            }
+        });
+    });
+
+    btnPause.addEventListener('click', function() {
+        isPaused = true;
+        setPausedUI();
+    });
+
+    btnResume.addEventListener('click', function() {
+        isPaused = false;
+        setStudyingUI();
+    });
+
+    btnEnd.addEventListener('click', function() {
+        if (!confirm('确定结束本次学习吗？')) return;
+        clearInterval(timerInterval);
+        timerInterval = null;
+
+        apiCall('{% url "study_checkin:api_end" %}', 'POST', {
+            session_key: sessionKey,
+            session_id: sessionId,
+            duration_seconds: elapsedSeconds,
+        })
+        .then(data => {
+            if (data.success) {
+                sessionId = null;
+                elapsedSeconds = 0;
+                isPaused = false;
+                setIdleUI();
+                loadTodaySessions();
+            }
+        });
+    });
+
+    // --- Resume unfinished session ---
+    document.getElementById('btnResumeSession').addEventListener('click', function() {
+        resumePrompt.style.display = 'none';
+        sessionId = activeSession.id;
+        elapsedSeconds = activeSession.elapsed_seconds;
+        isPaused = false;
+        timerDisplay.textContent = formatTime(elapsedSeconds);
+        setStudyingUI();
+        timerInterval = setInterval(tick, 1000);
+    });
+
+    document.getElementById('btnDiscardSession').addEventListener('click', function() {
+        resumePrompt.style.display = 'none';
+        apiCall('{% url "study_checkin:api_end" %}', 'POST', {
+            session_key: sessionKey,
+            session_id: activeSession.id,
+            duration_seconds: 0,
+        }).then(() => loadTodaySessions());
+    });
+
+    // --- Load today sessions ---
+    function loadTodaySessions() {
+        fetch('{% url "study_checkin:api_today" %}?session_key=' + encodeURIComponent(sessionKey))
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            todayTotalSeconds = data.total_seconds;
+            todayTotal.textContent = formatTime(todayTotalSeconds);
+            checkTarget();
+
+            const tbody = document.getElementById('sessionsBody');
+            const table = document.getElementById('sessionsTable');
+            const noSessions = document.getElementById('noSessions');
+
+            if (data.sessions.length === 0) {
+                table.style.display = 'none';
+                noSessions.style.display = '';
+            } else {
+                table.style.display = '';
+                noSessions.style.display = 'none';
+                tbody.innerHTML = '';
+                data.sessions.forEach(function(s) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + s.start_time + '</td>' +
+                                   '<td>' + (s.end_time || '-') + '</td>' +
+                                   '<td>' + s.duration_display + '</td>';
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+    }
+
+    // --- Init ---
+    if (sessionKey) {
+        if (activeSession) {
+            resumePromptMsg.textContent = '你有一个未结束的学习会话（开始于 ' + activeSession.start_time + '），是否继续？';
+            resumePrompt.style.display = '';
+        }
+        loadTodaySessions();
+    }
+
+    const pwInput = document.getElementById('passwordInput');
+    if (pwInput.offsetParent !== null) pwInput.focus();
+});
+</script>
+</body>
+</html>

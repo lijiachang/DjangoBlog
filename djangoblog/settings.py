@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'oauth',
     'servermanager',
     'owntracks',
-    'compressor'
+    'compressor',
+    'study_checkin',
 ]
 
 MIDDLEWARE = [

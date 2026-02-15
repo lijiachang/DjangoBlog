@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习统计</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #faf5ff 0%, #fce4ec 50%, #fff3e0 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .main-wrapper {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 30px 16px 60px;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+        .page-header p { color: #8e99a4; font-size: 0.95rem; margin: 0; }
+
+        /* Cards */
+        .s-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .s-card-body { padding: 24px; }
+        .s-card-header {
+            padding: 16px 20px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 3px solid #edf2f7;
+        }
+
+        /* Auth */
+        .auth-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 1.8rem; color: #e91e63;
+        }
+        .auth-input {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .auth-input:focus { border-color: #f093fb; }
+        .auth-btn {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .auth-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(245,87,108,0.4); }
+        .auth-error { color: #e53e3e; font-size: 0.9rem; margin-top: 10px; }
+
+        /* Today banner */
+        .today-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .today-banner .label { font-size: 0.85rem; opacity: 0.85; margin-bottom: 4px; }
+        .today-banner .time {
+            font-size: 2.8rem;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 2px;
+        }
+        .target-badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .target-reached { background: rgba(255,255,255,0.25); color: #fff; }
+        .target-remaining { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); }
+
+        /* Data tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table thead th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 20px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .data-table tbody td {
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            color: #4a5568;
+            border-bottom: 1px solid #f7fafc;
+        }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:hover { background: #f7fafc; }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            color: #a0aec0;
+        }
+        .empty-state i { font-size: 2rem; margin-bottom: 8px; display: block; }
+
+        /* Badges */
+        .badge-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+        }
+        .badge-yes { background: #c6f6d5; color: #276749; }
+        .badge-no { background: #fed7d7; color: #9b2c2c; }
+
+        /* Loading */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+        .loading-state i { font-size: 2rem; margin-bottom: 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fa-spin { animation: spin 1s linear infinite; }
+
+        /* Footer */
+        .footer-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+        .footer-link a {
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .footer-link a:hover { color: #667eea; }
+
+        /* Color accents for card headers */
+        .header-green { border-bottom-color: #48bb78 !important; }
+        .header-green i { color: #48bb78; }
+        .header-blue { border-bottom-color: #4299e1 !important; }
+        .header-blue i { color: #4299e1; }
+        .header-orange { border-bottom-color: #ed8936 !important; }
+        .header-orange i { color: #ed8936; }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <!-- Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-chart-bar"></i> 学习统计</h1>
+        <p>查看学习记录与汇总</p>
+    </div>
+
+    <!-- Auth Section -->
+    <div id="auth-section" style="{% if authenticated %}display:none{% endif %}">
+        <div class="s-card">
+            <div class="s-card-body" style="text-align:center;">
+                <div class="auth-icon"><i class="fas fa-lock"></i></div>
+                <h4 style="font-weight:700; margin-bottom:20px; color:#2d3748;">请输入访问密码</h4>
+                <input type="password" class="auth-input" id="passwordInput" placeholder="输入密码" autocomplete="off">
+                <button class="auth-btn" id="btnVerify"><i class="fas fa-sign-in-alt"></i> 进入</button>
+                <div id="auth-error" class="auth-error" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div id="summary-section" style="{% if not authenticated %}display:none{% endif %}">
+        <!-- Loading -->
+        <div id="loading" class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>加载中...</p>
+        </div>
+
+        <!-- Today -->
+        <div id="todayBanner" class="today-banner" style="display:none;">
+            <div class="label">今日学习总时长</div>
+            <div class="time" id="todayTotalDisplay">00:00:00</div>
+            <div id="todayTargetBadge"></div>
+        </div>
+
+        <div id="todayCard" class="s-card" style="display:none;">
+            <div class="s-card-header header-green">
+                <i class="fas fa-calendar-day"></i> 今日学习详情
+            </div>
+            <div id="todayNoSessions" class="empty-state" style="display:none;">
+                <i class="fas fa-inbox"></i>今天还没有学习记录
+            </div>
+            <table id="todayTable" class="data-table" style="display:none;">
+                <thead><tr><th>开始</th><th>结束</th><th>时长</th></tr></thead>
+                <tbody id="todayBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Daily -->
+        <div id="dailyCard" class="s-card" style="display:none;">
+            <div class="s-card-header header-blue">
+                <i class="fas fa-calendar-alt"></i> 每日记录（最近30天）
+            </div>
+            <div id="dailyNoData" class="empty-state" style="display:none;">
+                <i class="fas fa-inbox"></i>暂无数据
+            </div>
+            <table id="dailyTable" class="data-table" style="display:none;">
+                <thead><tr><th>日期</th><th>学习时长</th><th>达标</th></tr></thead>
+                <tbody id="dailyBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Monthly -->
+        <div id="monthlyCard" class="s-card" style="display:none;">
+            <div class="s-card-header header-orange">
+                <i class="fas fa-chart-line"></i> 月度汇总
+            </div>
+            <div id="monthlyNoData" class="empty-state" style="display:none;">
+                <i class="fas fa-inbox"></i>暂无数据
+            </div>
+            <table id="monthlyTable" class="data-table" style="display:none;">
+                <thead><tr><th>月份</th><th>总学习时长</th></tr></thead>
+                <tbody id="monthlyBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-link">
+            <a href="{% url 'study_checkin:checkin' %}">
+                <i class="fas fa-arrow-left"></i> 返回打卡页面
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let authenticated = {{ authenticated|yesno:"true,false" }};
+    const csrfToken = '{{ csrf_token }}';
+
+    function formatTime(totalSec) {
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function formatHours(totalSec) {
+        return (totalSec / 3600).toFixed(1) + '小时';
+    }
+
+    // --- Password ---
+    document.getElementById('btnVerify').addEventListener('click', doVerify);
+    document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') doVerify();
+    });
+
+    function doVerify() {
+        const pw = document.getElementById('passwordInput').value;
+        fetch('{% url "study_checkin:api_verify" %}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+            body: JSON.stringify({password: pw, page: 'summary'}),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                authenticated = true;
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('summary-section').style.display = '';
+                loadSummary();
+            } else {
+                const err = document.getElementById('auth-error');
+                err.textContent = data.error || '密码错误';
+                err.style.display = '';
+            }
+        });
+    }
+
+    // --- Load summary ---
+    function loadSummary() {
+        fetch('{% url "study_checkin:api_summary_data" %}')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            document.getElementById('loading').style.display = 'none';
+
+            const targetHours = data.daily_target_hours;
+            const targetSeconds = targetHours * 3600;
+
+            // --- Today banner ---
+            const banner = document.getElementById('todayBanner');
+            banner.style.display = '';
+            document.getElementById('todayTotalDisplay').textContent = formatTime(data.today.total_seconds);
+
+            const badge = document.getElementById('todayTargetBadge');
+            if (data.today.total_seconds >= targetSeconds && targetSeconds > 0) {
+                badge.innerHTML = '<span class="target-badge target-reached"><i class="fas fa-check-circle"></i> 已达标 (目标' + targetHours + '小时)</span>';
+            } else if (targetSeconds > 0) {
+                const remaining = Math.max(0, targetSeconds - data.today.total_seconds);
+                badge.innerHTML = '<span class="target-badge target-remaining">距目标还需 ' + formatHours(remaining) + '</span>';
+            }
+
+            // --- Today sessions ---
+            const todayCard = document.getElementById('todayCard');
+            todayCard.style.display = '';
+            if (data.today.sessions.length === 0) {
+                document.getElementById('todayNoSessions').style.display = '';
+            } else {
+                document.getElementById('todayTable').style.display = '';
+                const tbody = document.getElementById('todayBody');
+                tbody.innerHTML = '';
+                data.today.sessions.forEach(function(s) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + s.start_time + '</td><td>' + s.end_time + '</td><td>' + s.duration_display + '</td>';
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // --- Daily ---
+            const dailyCard = document.getElementById('dailyCard');
+            dailyCard.style.display = '';
+            if (data.daily.length === 0) {
+                document.getElementById('dailyNoData').style.display = '';
+            } else {
+                document.getElementById('dailyTable').style.display = '';
+                const tbody = document.getElementById('dailyBody');
+                tbody.innerHTML = '';
+                data.daily.forEach(function(d) {
+                    const tr = document.createElement('tr');
+                    const reached = d.total_seconds >= targetSeconds;
+                    tr.innerHTML = '<td>' + d.date + '</td>' +
+                        '<td>' + formatHours(d.total_seconds) + '</td>' +
+                        '<td><span class="badge-check ' + (reached ? 'badge-yes' : 'badge-no') + '">' +
+                        '<i class="fas fa-' + (reached ? 'check' : 'times') + '"></i></span></td>';
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // --- Monthly ---
+            const monthlyCard = document.getElementById('monthlyCard');
+            monthlyCard.style.display = '';
+            if (data.monthly.length === 0) {
+                document.getElementById('monthlyNoData').style.display = '';
+            } else {
+                document.getElementById('monthlyTable').style.display = '';
+                const tbody = document.getElementById('monthlyBody');
+                tbody.innerHTML = '';
+                data.monthly.forEach(function(m) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + m.month + '</td><td>' + formatHours(m.total_seconds) + '</td>';
+                    tbody.appendChild(tr);
+                });
+            }
+        });
+    }
+
+    // --- Init ---
+    if (authenticated) {
+        loadSummary();
+    }
+
+    const pwInput = document.getElementById('passwordInput');
+    if (pwInput.offsetParent !== null) pwInput.focus();
+});
+</script>
+</body>
+</html>
