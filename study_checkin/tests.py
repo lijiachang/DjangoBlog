@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.test import TestCase, Client
 
-from .models import StudyCheckinSettings, StudySession
+from .models import DailyNote, StudyCheckinSettings, StudySession
 
 
 class StudyCheckinSettingsTest(TestCase):
@@ -252,3 +252,88 @@ class PageViewTest(TestCase):
     def test_summary_page_loads(self):
         response = self.client.get('/study/summary/')
         self.assertEqual(response.status_code, 200)
+
+
+class DailyNoteTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        StudyCheckinSettings.objects.create(
+            checkin_password='test123',
+            summary_password='summary456',
+            daily_target_hours=2.0,
+        )
+        # Authenticate for checkin page
+        self.client.post(
+            '/study/api/verify/',
+            json.dumps({'password': 'test123', 'page': 'checkin'}),
+            content_type='application/json',
+        )
+
+    def test_save_and_get_note(self):
+        # Save
+        response = self.client.post(
+            '/study/api/note/save/',
+            json.dumps({'content': '今天学了数学和英语'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+
+        # Get
+        response = self.client.get('/study/api/note/')
+        data = response.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['content'], '今天学了数学和英语')
+
+    def test_update_note(self):
+        # Save first version
+        self.client.post(
+            '/study/api/note/save/',
+            json.dumps({'content': '第一版'}),
+            content_type='application/json',
+        )
+        # Update
+        self.client.post(
+            '/study/api/note/save/',
+            json.dumps({'content': '修改后的版本'}),
+            content_type='application/json',
+        )
+        response = self.client.get('/study/api/note/')
+        self.assertEqual(response.json()['content'], '修改后的版本')
+        # Should only have one record for today
+        self.assertEqual(DailyNote.objects.count(), 1)
+
+    def test_note_unauthorized(self):
+        client = Client()  # no cookie
+        response = client.post(
+            '/study/api/note/save/',
+            json.dumps({'content': 'test'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_note_in_summary(self):
+        # Save a note
+        self.client.post(
+            '/study/api/note/save/',
+            json.dumps({'content': '学了物理'}),
+            content_type='application/json',
+        )
+        # Create a session so daily data exists
+        StudySession.objects.create(
+            session_key='key',
+            start_time=datetime.now() - timedelta(hours=1),
+            end_time=datetime.now(),
+            duration_seconds=3600,
+        )
+        # Auth for summary
+        summary_client = Client()
+        summary_client.post(
+            '/study/api/verify/',
+            json.dumps({'password': 'summary456', 'page': 'summary'}),
+            content_type='application/json',
+        )
+        response = summary_client.get('/study/api/summary-data/')
+        data = response.json()
+        self.assertEqual(data['today']['note'], '学了物理')
+        self.assertEqual(data['daily'][0]['note'], '学了物理')

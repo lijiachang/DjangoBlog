@@ -74,3 +74,18 @@ class StudySession(models.Model):
     @property
     def is_active(self):
         return self.end_time is None
+
+
+class DailyNote(models.Model):
+    """每日学习总结"""
+    date = models.DateField('日期', unique=True)
+    content = models.TextField('今日总结', blank=True, default='')
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '每日总结'
+        verbose_name_plural = verbose_name
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.date} 总结"

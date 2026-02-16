@@ -187,6 +187,43 @@
         .header-blue i { color: #4299e1; }
         .header-orange { border-bottom-color: #ed8936 !important; }
         .header-orange i { color: #ed8936; }
+
+        /* Notes */
+        .note-display {
+            padding: 16px 20px;
+            border-top: 1px solid #edf2f7;
+        }
+        .note-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .note-label i { color: #9f7aea; }
+        .note-content {
+            font-size: 0.9rem;
+            color: #4a5568;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .note-inline {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 2px;
+            white-space: pre-wrap;
+        }
+        .note-toggle {
+            font-size: 0.8rem;
+            color: #9f7aea;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            font-weight: 600;
+        }
+        .note-toggle:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -236,6 +273,10 @@
                 <thead><tr><th>开始</th><th>结束</th><th>时长</th></tr></thead>
                 <tbody id="todayBody"></tbody>
             </table>
+            <div id="todayNoteArea" class="note-display" style="display:none;">
+                <div class="note-label"><i class="fas fa-pen-fancy"></i> 今日总结</div>
+                <div id="todayNoteContent" class="note-content"></div>
+            </div>
         </div>
 
         <!-- Daily -->
@@ -247,7 +288,7 @@
                 <i class="fas fa-inbox"></i>暂无数据
             </div>
             <table id="dailyTable" class="data-table" style="display:none;">
-                <thead><tr><th>日期</th><th>学习时长</th><th>达标</th></tr></thead>
+                <thead><tr><th>日期</th><th>学习时长</th><th>达标</th><th>总结</th></tr></thead>
                 <tbody id="dailyBody"></tbody>
             </table>
         </div>
@@ -289,6 +330,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function formatHours(totalSec) {
         return (totalSec / 3600).toFixed(1) + '小时';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // --- Password ---
@@ -359,6 +406,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
+            // --- Today note ---
+            if (data.today.note) {
+                const noteArea = document.getElementById('todayNoteArea');
+                noteArea.style.display = '';
+                document.getElementById('todayNoteContent').textContent = data.today.note;
+            }
+
             // --- Daily ---
             const dailyCard = document.getElementById('dailyCard');
             dailyCard.style.display = '';
@@ -371,10 +425,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.daily.forEach(function(d) {
                     const tr = document.createElement('tr');
                     const reached = d.total_seconds >= targetSeconds;
+                    const noteHtml = d.note
+                        ? '<span class="note-inline">' + escapeHtml(d.note) + '</span>'
+                        : '<span style="color:#cbd5e0;">-</span>';
                     tr.innerHTML = '<td>' + d.date + '</td>' +
                         '<td>' + formatHours(d.total_seconds) + '</td>' +
                         '<td><span class="badge-check ' + (reached ? 'badge-yes' : 'badge-no') + '">' +
-                        '<i class="fas fa-' + (reached ? 'check' : 'times') + '"></i></span></td>';
+                        '<i class="fas fa-' + (reached ? 'check' : 'times') + '"></i></span></td>' +
+                        '<td>' + noteHtml + '</td>';
                     tbody.appendChild(tr);
                 });
             }

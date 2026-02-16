@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST, require_GET
 
-from .models import StudyCheckinSettings, StudySession
+from .models import DailyNote, StudyCheckinSettings, StudySession
 
 
 def get_study_settings():
@@ -212,10 +212,17 @@ def get_summary_data(request):
         total_seconds=Sum('duration_seconds')
     ).order_by('-date')
 
+    # 获取最近30天的每日总结
+    notes = {
+        n.date.strftime('%Y-%m-%d'): n.content
+        for n in DailyNote.objects.filter(date__gte=today - timedelta(days=30))
+    }
+
     daily_data = [{
         'date': d['date'].strftime('%Y-%m-%d'),
         'total_seconds': d['total_seconds'],
         'hours': round(d['total_seconds'] / 3600, 1),
+        'note': notes.get(d['date'].strftime('%Y-%m-%d'), ''),
     } for d in daily]
 
     # 月度汇总
@@ -231,13 +238,56 @@ def get_summary_data(request):
         'hours': round(m['total_seconds'] / 3600, 1),
     } for m in monthly]
 
+    today_note = DailyNote.objects.filter(date=today).first()
+
     return JsonResponse({
         'success': True,
         'today': {
             'sessions': today_data,
             'total_seconds': today_total,
+            'note': today_note.content if today_note else '',
         },
         'daily': daily_data,
         'monthly': monthly_data,
         'daily_target_hours': float(get_study_settings().daily_target_hours),
+    })
+
+
+@require_POST
+def save_daily_note(request):
+    """保存今日学习总结"""
+    if not check_study_auth(request, 'checkin'):
+        return JsonResponse({'success': False, 'error': '未授权'}, status=403)
+
+    data = json.loads(request.body)
+    content = data.get('content', '').strip()
+    today = datetime.now().date()
+
+    note, _ = DailyNote.objects.update_or_create(
+        date=today,
+        defaults={'content': content},
+    )
+    return JsonResponse({'success': True})
+
+
+@require_GET
+def get_daily_note(request):
+    """获取指定日期的学习总结"""
+    if not check_study_auth(request, 'checkin'):
+        return JsonResponse({'success': False, 'error': '未授权'}, status=403)
+
+    date_str = request.GET.get('date', '')
+    if date_str:
+        try:
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            date = datetime.now().date()
+    else:
+        date = datetime.now().date()
+
+    note = DailyNote.objects.filter(date=date).first()
+    return JsonResponse({
+        'success': True,
+        'content': note.content if note else '',
+        'date': date.strftime('%Y-%m-%d'),
     })

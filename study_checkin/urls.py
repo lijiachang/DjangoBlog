@@ -12,4 +12,6 @@ urlpatterns = [
     path('api/end/', views.end_session, name='api_end'),
     path('api/today/', views.get_today_sessions, name='api_today'),
     path('api/summary-data/', views.get_summary_data, name='api_summary_data'),
+    path('api/note/save/', views.save_daily_note, name='api_note_save'),
+    path('api/note/', views.get_daily_note, name='api_note'),
 ]

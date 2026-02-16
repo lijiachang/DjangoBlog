@@ -67,3 +67,4 @@ admin_site.register(LogEntry, LogEntryAdmin)
 
 admin_site.register(StudyCheckinSettings, StudyCheckinSettingsAdmin)
 admin_site.register(StudySession, StudySessionAdmin)
+admin_site.register(DailyNote, DailyNoteAdmin)

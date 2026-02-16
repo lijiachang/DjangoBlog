@@ -258,6 +258,40 @@
         .dot-blink { animation: blink 1s infinite; }
 
         .auth-error { color: #e53e3e; font-size: 0.9rem; margin-top: 10px; }
+
+        /* Note */
+        .note-input {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+            min-height: 80px;
+        }
+        .note-input:focus { border-color: #43e97b; }
+        .note-save-btn {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .note-save-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(67,233,123,0.3); }
+        .note-save-status {
+            font-size: 0.85rem;
+            color: #48bb78;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .note-save-status.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -337,6 +371,23 @@
             <button id="btnDiscardSession" class="resume-btn resume-btn-no">
                 <i class="fas fa-times"></i> 放弃
             </button>
+        </div>
+
+        <!-- Daily Note -->
+        <div class="s-card">
+            <div class="card-section-title">
+                <i class="fas fa-pen-fancy"></i> 今日总结
+            </div>
+            <div style="padding: 0 20px 20px;">
+                <textarea id="noteInput" class="note-input" rows="3"
+                    placeholder="今天学了什么？简单记两句..."></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+                    <span id="noteSaveStatus" class="note-save-status"></span>
+                    <button id="btnSaveNote" class="note-save-btn">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Today Sessions -->
@@ -577,6 +628,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- Daily Note ---
+    const noteInput = document.getElementById('noteInput');
+    const noteSaveStatus = document.getElementById('noteSaveStatus');
+
+    document.getElementById('btnSaveNote').addEventListener('click', function() {
+        apiCall('{% url "study_checkin:api_note_save" %}', 'POST', {content: noteInput.value})
+        .then(data => {
+            if (data.success) {
+                noteSaveStatus.textContent = '已保存';
+                noteSaveStatus.classList.add('show');
+                setTimeout(() => noteSaveStatus.classList.remove('show'), 2000);
+            }
+        });
+    });
+
+    function loadDailyNote() {
+        fetch('{% url "study_checkin:api_note" %}')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                noteInput.value = data.content;
+            }
+        });
+    }
+
     // --- Init ---
     if (sessionKey) {
         if (activeSession) {
@@ -584,6 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
             resumePrompt.style.display = '';
         }
         loadTodaySessions();
+        loadDailyNote();
     }
 
     const pwInput = document.getElementById('passwordInput');
