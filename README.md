@@ -105,8 +105,8 @@ python manage.py compress --force
 # 二次开发后重新部署
 
 首先重新构建镜像：  
+git pull  
 docker-compose build djangoblog
 
 然后重启服务：  
-docker-compose down  
-docker-compose up -d  
+docker-compose down && docker-compose up -d  
