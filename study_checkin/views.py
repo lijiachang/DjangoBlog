@@ -39,20 +39,21 @@ def checkin_view(request):
     session_key = check_study_auth(request, 'checkin')
     settings = get_study_settings()
 
-    # 检查是否有未结束的会话
+    # 检查是否有未结束的会话（全局查询，单学生系统）
     active_session = None
     if session_key:
         active_session = StudySession.objects.filter(
-            session_key=session_key, end_time__isnull=True
+            end_time__isnull=True
         ).first()
 
     active_session_data = None
     if active_session:
-        elapsed = (datetime.now() - active_session.start_time).total_seconds()
+        max_elapsed = int((datetime.now() - active_session.start_time).total_seconds())
         active_session_data = {
             'id': active_session.pk,
             'start_time': active_session.start_time.strftime('%H:%M:%S'),
-            'elapsed_seconds': int(elapsed),
+            'elapsed_seconds': max_elapsed,
+            'max_elapsed_seconds': max_elapsed,
         }
 
     return render(request, 'study_checkin/checkin.html', {
@@ -108,9 +109,9 @@ def start_session(request):
     if not session_key:
         return JsonResponse({'success': False, 'error': '未授权'}, status=403)
 
-    # 检查是否有未结束的会话
+    # 检查是否有未结束的会话（全局，单学生系统）
     active = StudySession.objects.filter(
-        session_key=session_key, end_time__isnull=True
+        end_time__isnull=True
     ).first()
     if active:
         return JsonResponse({

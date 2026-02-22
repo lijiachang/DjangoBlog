@@ -175,6 +175,29 @@ class StudySessionAPITest(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def test_cannot_start_session_from_different_browser(self):
+        """A different session_key should not start a session if one is already active"""
+        # Start a session with original session_key
+        self.client.post(
+            '/study/api/start/',
+            json.dumps({'session_key': self.session_key}),
+            content_type='application/json',
+        )
+        # Simulate a second browser with a different session_key
+        client2 = Client()
+        client2.post(
+            '/study/api/verify/',
+            json.dumps({'password': 'test123', 'page': 'checkin'}),
+            content_type='application/json',
+        )
+        response2 = client2.post(
+            '/study/api/start/',
+            json.dumps({'session_key': 'different_session_key'}),
+            content_type='application/json',
+        )
+        data = response2.json()
+        self.assertFalse(data['success'])
+
     def test_anti_cheat_duration_cap(self):
         """duration_seconds should not exceed actual elapsed time"""
         session = StudySession.objects.create(

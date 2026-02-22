@@ -450,6 +450,20 @@ document.addEventListener('DOMContentLoaded', function() {
         return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     }
 
+    // --- localStorage persistence for elapsed seconds ---
+    function saveElapsed(sid, seconds) {
+        try { localStorage.setItem('study_elapsed_' + sid, seconds); } catch(e) {}
+    }
+    function loadElapsed(sid) {
+        try {
+            const v = localStorage.getItem('study_elapsed_' + sid);
+            return v !== null ? parseInt(v, 10) : null;
+        } catch(e) { return null; }
+    }
+    function clearElapsed(sid) {
+        try { localStorage.removeItem('study_elapsed_' + sid); } catch(e) {}
+    }
+
     function apiCall(url, method, body) {
         const opts = {
             method: method,
@@ -487,9 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isPaused) {
             elapsedSeconds++;
             timerDisplay.textContent = formatTime(elapsedSeconds);
-            // 同步更新今日总时长（含当前进行中）
             todayTotal.textContent = formatTime(todayTotalSeconds + elapsedSeconds);
             checkTarget();
+            if (sessionId) saveElapsed(sessionId, elapsedSeconds);
         }
     }
 
@@ -559,6 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!confirm('确定结束本次学习吗？')) return;
         clearInterval(timerInterval);
         timerInterval = null;
+        const endingSessionId = sessionId;
 
         apiCall('{% url "study_checkin:api_end" %}', 'POST', {
             session_key: sessionKey,
@@ -567,6 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
+                clearElapsed(endingSessionId);
                 sessionId = null;
                 elapsedSeconds = 0;
                 isPaused = false;
@@ -580,7 +596,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnResumeSession').addEventListener('click', function() {
         resumePrompt.style.display = 'none';
         sessionId = activeSession.id;
-        elapsedSeconds = activeSession.elapsed_seconds;
+        // Prefer localStorage (actual study time) over server wall-clock time
+        const saved = loadElapsed(activeSession.id);
+        if (saved !== null) {
+            elapsedSeconds = Math.min(saved, activeSession.max_elapsed_seconds);
+        } else {
+            elapsedSeconds = activeSession.elapsed_seconds;
+        }
         isPaused = false;
         timerDisplay.textContent = formatTime(elapsedSeconds);
         setStudyingUI();
@@ -589,6 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('btnDiscardSession').addEventListener('click', function() {
         resumePrompt.style.display = 'none';
+        clearElapsed(activeSession.id);
         apiCall('{% url "study_checkin:api_end" %}', 'POST', {
             session_key: sessionKey,
             session_id: activeSession.id,
