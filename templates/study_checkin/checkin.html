@@ -422,7 +422,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let sessionId = null;
     let timerInterval = null;
     let elapsedSeconds = 0;
-    let isPaused = false;
+    let studyStartTimestamp = null;  // Date.now() when current study segment started
+    let baseElapsedSeconds = 0;     // accumulated seconds before current segment
     let todayTotalSeconds = 0;
     let sessionKey = '{{ session_key }}';
     const dailyTargetSeconds = {{ daily_target_hours }} * 3600;
@@ -498,8 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Timer ---
     function tick() {
-        if (!isPaused) {
-            elapsedSeconds++;
+        if (studyStartTimestamp !== null) {
+            elapsedSeconds = baseElapsedSeconds + Math.floor((Date.now() - studyStartTimestamp) / 1000);
             timerDisplay.textContent = formatTime(elapsedSeconds);
             todayTotal.textContent = formatTime(todayTotalSeconds + elapsedSeconds);
             checkTarget();
@@ -550,7 +551,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 sessionId = data.session_id;
                 elapsedSeconds = 0;
-                isPaused = false;
+                baseElapsedSeconds = 0;
+                studyStartTimestamp = Date.now();
                 setStudyingUI();
                 timerInterval = setInterval(tick, 1000);
             } else {
@@ -560,12 +562,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     btnPause.addEventListener('click', function() {
-        isPaused = true;
+        // Freeze: save current elapsed, stop counting
+        elapsedSeconds = baseElapsedSeconds + Math.floor((Date.now() - studyStartTimestamp) / 1000);
+        baseElapsedSeconds = elapsedSeconds;
+        studyStartTimestamp = null;
+        if (sessionId) saveElapsed(sessionId, elapsedSeconds);
         setPausedUI();
     });
 
     btnResume.addEventListener('click', function() {
-        isPaused = false;
+        studyStartTimestamp = Date.now();
         setStudyingUI();
     });
 
@@ -573,6 +579,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!confirm('确定结束本次学习吗？')) return;
         clearInterval(timerInterval);
         timerInterval = null;
+        // Compute final elapsed (may be paused or studying)
+        if (studyStartTimestamp !== null) {
+            elapsedSeconds = baseElapsedSeconds + Math.floor((Date.now() - studyStartTimestamp) / 1000);
+        }
         const endingSessionId = sessionId;
 
         apiCall('{% url "study_checkin:api_end" %}', 'POST', {
@@ -585,7 +595,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearElapsed(endingSessionId);
                 sessionId = null;
                 elapsedSeconds = 0;
-                isPaused = false;
+                baseElapsedSeconds = 0;
+                studyStartTimestamp = null;
                 setIdleUI();
                 loadTodaySessions();
             }
@@ -599,11 +610,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prefer localStorage (actual study time) over server wall-clock time
         const saved = loadElapsed(activeSession.id);
         if (saved !== null) {
-            elapsedSeconds = Math.min(saved, activeSession.max_elapsed_seconds);
+            baseElapsedSeconds = Math.min(saved, activeSession.max_elapsed_seconds);
         } else {
-            elapsedSeconds = activeSession.elapsed_seconds;
+            baseElapsedSeconds = activeSession.elapsed_seconds;
         }
-        isPaused = false;
+        studyStartTimestamp = Date.now();
+        elapsedSeconds = baseElapsedSeconds;
         timerDisplay.textContent = formatTime(elapsedSeconds);
         setStudyingUI();
         timerInterval = setInterval(tick, 1000);
