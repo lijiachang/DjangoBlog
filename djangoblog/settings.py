@@ -204,7 +204,7 @@ CACHES = {
 if os.environ.get("DJANGO_REDIS_URL"):
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'BACKEND': 'djangoblog.cache_backend.SafeRedisCache',
             'LOCATION': f'redis://{os.environ.get("DJANGO_REDIS_URL")}',
         }
     }
